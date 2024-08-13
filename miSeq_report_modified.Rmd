@@ -1,0 +1,164 @@
+---
+title: ''
+output: pdf_document
+date: '2023-08-18'
+---
+
+```{r setup, include=FALSE}
+library(lemon)
+library(ggpubr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Test
+```{r intro, echo=FALSE, fig.height = 6.5, fig.width = 10.5, fig.align = "center"}
+data <- read.csv(file = "/Users/nini/Documents/miseq_data/MISEQ_R_Data/read.quality", header = FALSE, sep = "\t")
+head(data)
+colnames(data) <- c("donor", "gene", "type", "count", "percent")
+p <- ggplot(data, aes(x = type, y = percent, col = type)) +
+  geom_boxplot(alpha = 0.5, position = "identity") +
+  labs(x = "Read-pair type", y = "Percent of total", title = "Read-pair type distribution") +
+  theme_minimal() + rotate_x_text(angle = 90)
+p
+p+facet_grid(. ~ gene)
+p+facet_grid(. ~ donor)
+
+```
+
+
+
+## Including Plots
+
+```{r lztfl1-1, echo=FALSE}
+#data <- read.csv(file = "/mnt/raidinput/input/own/projekte/kempkes/miSeq_230804/final/gotohEC/combined/LZTFL1-1.merged", header = FALSE, sep = "\t")
+#head(data)
+#colnames(data) <- c("donor", "gene", "type", "count", "percent")
+
+#p <- ggbarplot(data, x = "EC", y = "percent", col = "EC", label = TRUE) +
+#  #geom_boxplot(alpha = 0.5, position = "identity") +
+#  labs(x = "Position in fragment", y = "Proportion of paired reads", title = "Positions covered by both reads of a pair, shown as a proportion of total") +
+#  theme_minimal()
+#p+facet_grid(. ~ donor)
+#p+facet_grid(donor ~ .)
+```
+
+```{r all, echo=FALSE}
+plotDistribBarsPercent <- function(data, header = "title") {
+p <- ggbarplot(data, x = "ec", y = "percent", col = "ec", label = TRUE) +
+  labs(x = "Read pair type (ec)", y = "Proportion of total", title = header) +
+  theme_minimal() + rotate_x_text(angle = 90)
+#p+facet_grid(. ~ donor)
+p+facet_grid(donor ~ .)
+}
+plotDistribBarsTotal <- function(data, header = "title") {
+p <-  ggbarplot(data, x = "ec", y = "count", col = "ec", label = TRUE) +
+  labs(x = "Read pair type (EC)", y = "Proportion of total", title = header) +
+  theme_minimal() + rotate_x_text(angle = 90)
+#p+facet_grid(. ~ donor)
+p+facet_grid(donor ~ .)
+}
+
+data <- read.csv(file = "/Users/nini/Documents/miseq_data/MISEQ_R_Data/ec_counts.merged", header = FALSE, sep = "\t")
+colnames(data) <- c("donor", "gene", "count", "percent", "ec")
+
+plotDistribBarsPercent(data[data$gene == "LZTFL1-1",], "LZTFL1-1")
+plotDistribBarsPercent(data[data$gene == "LZTFL1-pro",], "LZTFL1-pro")
+plotDistribBarsPercent(data[data$gene == "HIVEP3",], "HIVEP3")
+#plotDistribBarsPercent(data[data$gene == "SLAMF1",], "SLAMF1")
+#plotDistribBarsPercent(data[data$gene == "POU5F1B",], "POU5F1B")
+
+plotDistribBarsTotal(data[data$gene == "LZTFL1-1",], "LZTFL1-1")
+plotDistribBarsTotal(data[data$gene == "LZTFL1-pro",], "LZTFL1-pro")
+plotDistribBarsTotal(data[data$gene == "HIVEP3",], "HIVEP3")
+#plotDistribBarsTotal(data[data$gene == "SLAMF1",], "SLAMF1")
+#plotDistribBarsTotal(data[data$gene == "POU5F1B",], "POU5F1B")
+```
+
+
+
+
+```{r read-types, echo=FALSE, fig.height = 6.5, fig.width = 10.5, fig.align = "center"}
+data <- read.csv(file = "/Users/nini/Documents/miseq_data/MISEQ_R_Data/read.quality", header = FALSE, sep = "\t")
+head(data)
+colnames(data) <- c("donor", "gene", "type", "count", "percent")
+
+ggboxplot(data, x = "gene",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "donor") + rotate_x_text(angle = 90)
+
+ggboxplot(data, x = "donor",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "gene") + rotate_x_text(angle = 90)
+
+data2 <- data[data$gene != "POU5F1B-exon",]
+ggboxplot(data2, x = "gene",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "donor") + rotate_x_text(angle = 90)
+
+ggboxplot(data2, x = "donor",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "gene") + rotate_x_text(angle = 90)
+
+data3 <- data
+data3 <- data3[data3$gene != "POU5F1B-exon",]
+data3 <- data3[data3$gene != "HIVEP3",]
+data3 <- data3[data3$gene != "SLAMF1",]
+ggboxplot(data3, x = "gene",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "donor") + rotate_x_text(angle = 90)
+
+ggboxplot(data3, x = "donor",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "gene") + rotate_x_text(angle = 90)
+
+
+
+p <- ggplot(data, aes(x = type, y = percent, col = type)) +
+  geom_boxplot(alpha = 0.5, position = "identity") +
+  labs(x = "Position in fragment", y = "Proportion of paired reads", title = "Positions covered by both reads of a pair, shown as a proportion of total") +
+  theme_minimal()
+p
+p+facet_grid(. ~ gene)
+p+facet_grid(. ~ donor)
+p+facet_grid(donor ~ gene)
+p+facet_rep_grid(rows=vars(donor), cols=vars(gene), scales = "free", switch="both", repeat.tick.labels = 'y')
+
+```
+```{r pie, echo=FALSE}
+#library(scales)
+#
+#test <- data[data$gene == "LZTFL1-1",]
+#
+#bp<- ggplot(test, x="ec", y="percent", col = "ec")+
+#geom_bar(width = 1)
+#bp
+#
+#wpie <- bp + coord_polar("y", start=0)
+#pie
+##
+#blank_theme <- theme_minimal()+
+#  theme(
+#  axis.title.x = element_blank(),
+#  axis.title.y = element_blank(),
+#  panel.border = element_blank(),
+#  panel.grid=element_blank(),
+#  axis.ticks = element_blank(),
+#  plot.title=element_text(size=14, face="bold")
+#  )
+#pie + scale_fill_brewer("Blues") + blank_theme +
+#  theme(axis.text.x=element_blank())+
+#  geom_text(aes(y = value/3 + c(0, cumsum(value)[-length(value)]), 
+#                label = percent(value/100)), size=5)
+```

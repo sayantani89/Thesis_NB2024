@@ -1,0 +1,134 @@
+---
+title: "PCA_human_for_thesis_modified_for_figure6"
+author: "Nini"
+date: "2023-12-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(DESeq2)
+library(ggplot2)
+library(dplyr)
+library(ggrepel)
+library(factoextra)
+library(tidyverse)
+
+
+options(ggrepel.max.overlaps = 70)
+
+```
+
+
+```{r functions, echo=FALSE}
+pca_analysis <- function(data, labels,  header = "title") {
+  res.pca <- prcomp(t(data))
+  
+  
+  a <- fviz_eig(res.pca)
+  library(RColorBrewer)
+  
+  groups <- as.factor(paste(labels$V2, labels$V3))
+  d <- fviz_pca_ind(res.pca,
+                    col.ind = groups,
+                                     
+                      # color by groups
+                     #palette = c("#00AFBB",  "#FC4E07"),
+                     #addEllipses = TRUE, # Concentration ellipses
+                     #ellipse.type = "confidence",
+                    legend.title = "Groups",
+                    col.var = "#2E9FDF", # Variables color
+                    repel = TRUE,
+                    title = header,
+                    palette = brewer.pal(8, "Set1")+
+geom_text_repel(aes(label = rownames(res.pca$ind$coord)), box.padding = 1.5, point.padding = 1.5)
+                    )
+  plot_list <- list(a,d)
+  
+  return(plot_list)
+}
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r all_NOER_ER, echo=FALSE}
+
+
+data_star <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/human/human.gene.counts.star", row.names = 1, header = TRUE))
+data_star <- as.data.frame (data_star)
+
+data_star_nuc <- as.data.frame(data_star) %>% select("MUC5708_S14.tr1.bam", "MUC5708_S14.tr2.bam", "MUC5708_S14.tr3.bam", "SAR59.6.tr1.bam", "SAR59.6.tr2.bam", "SAR59.10.tr1.bam", "SAR59.10.tr2.bam", "MUC5706_S12.tr1.bam", "MUC5706_S12.tr2.bam", "MUC5706_S12.tr3.bam", "SAR59.5.tr1.bam", "SAR59.5.tr2.bam", "SAR59.9.tr1.bam", "SAR59.9.tr2.bam")
+
+
+data_star_cyto <- as.data.frame(data_star) %>% select("MUC5707_S13.tr1.bam", "MUC5707_S13.tr2.bam", "MUC5707_S13.tr3.bam", "MUC3775_S61.tr1.bam", "MUC3775_S61.tr2.bam", "MUC3775_S61.tr3.bam", "MUC3776_S62.tr1.bam", "MUC3776_S62.tr2.bam", "MUC3776_S62.tr3.bam", "MUC5705_S11.tr1.bam", "MUC5705_S11.tr2.bam", "MUC5705_S11.tr3.bam", "MUC3772_S58.tr1.bam", "MUC3772_S58.tr2.bam", "MUC3772_S58.tr3.bam", "MUC3773_S59.tr1.bam", "MUC3773_S59.tr2.bam", "MUC3773_S59.tr3.bam")
+
+```
+
+```{r nucleus, echo=FALSE}
+
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/human/noer_nuc.labels.map.csv", header = FALSE, sep = ";"))
+
+data_star <- data_star_nuc
+star <- pca_analysis(data_star,labels,"not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+
+star[2]
+star_rlog[2]
+star_vst[2]
+
+
+
+
+
+```
+## Cyto samples
+
+```{r cyto, echo=FALSE}
+data_star <- data_star_cyto
+
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/human/noer_cyto.labels.map.csv", header = FALSE, sep = ";"))
+
+star <- pca_analysis(data_star_cyto, labels, "not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+
+star[2]
+star_rlog[2]
+star_vst[2]
+ 
+
+```
+
+
+```
+
+

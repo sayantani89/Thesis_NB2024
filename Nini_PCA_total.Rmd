@@ -1,0 +1,275 @@
+---
+title: "pca_human_nini's_version"
+author: "Nini"
+date: "2023-08-04"
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+``````{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(factoextra)
+library(dplyr)
+library(tidyverse)
+library(DESeq2)
+options(ggrepel.max.overlaps = 50)
+```
+
+
+```{r functions, echo=FALSE}
+pca_analysis <- function(data, labels, header = "title") {
+res.pca <- prcomp(t(data))
+
+
+a <- fviz_eig(res.pca, title = header)
+
+
+b <- fviz_pca_ind(res.pca,
+             col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,     # Avoid text overlapping,
+             title = header
+)
+
+
+c <- fviz_pca_var(res.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE,     # Avoid text overlapping
+             title = header
+)
+
+#fviz_pca_biplot(res.pca, repel = TRUE,
+#                col.ind = "cos2",  # Individuals color
+#                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#                col.var = "#2E9FDF" # Variables color
+#)
+
+groups <- as.factor(paste(labels$V2, labels$V3))
+d <- fviz_pca_ind(res.pca,
+             col.ind = groups, # color by groups
+             #palette = c("#00AFBB",  "#FC4E07"),
+             #addEllipses = TRUE, # Concentration ellipses
+             #ellipse.type = "confidence",
+             legend.title = "Groups",
+             col.var = "#2E9FDF", # Variables color
+             repel = TRUE,
+             title = header
+)
+plot_list <- list(a,b,c,d)
+return(plot_list)
+}
+
+```
+
+## NOER and ER
+
+
+
+```{r data, echo=FALSE}
+getwd()
+data_star <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/human/gene.counts.star 2", row.names = 1, header = TRUE))
+head(data_star)
+data_star_nuc <- as.data.frame(data_star) %>% select("MUC5708_S14.tr1", "MUC5708_S14.tr2", "MUC5708_S14.tr3", "SAR59.6.tr1", "SAR59.6.tr2", "SAR59.10.tr1", "SAR59.10.tr2", "MUC5706_S12.tr1", "MUC5706_S12.tr2", "MUC5706_S12.tr3", "SAR59.5.tr1", "SAR59.5.tr2", "SAR59.9.tr1", "SAR59.9.tr2")
+
+
+data_star_cyto <- as.data.frame(data_star) %>% select("MUC5707_S13.tr1", "MUC5707_S13.tr2", "MUC5707_S13.tr3", "MUC3775_S61.tr1", "MUC3775_S61.tr2", "MUC3775_S61.tr3", "MUC3776_S62.tr1", "MUC3776_S62.tr2", "MUC3776_S62.tr3", "MUC5705_S11.tr1", "MUC5705_S11.tr2", "MUC5705_S11.tr3", "MUC3772_S58.tr1", "MUC3772_S58.tr2", "MUC3772_S58.tr3", "MUC3773_S59.tr1", "MUC3773_S59.tr2", "MUC3773_S59.tr3")
+
+data_star_chx_nuc <- as.data.frame(data_star) %>% select("SAR59.11.tr1","SAR59.11.tr2","SAR59.12.tr1","SAR59.12.tr2","MUC5702_S8.tr1","MUC5702_S8.tr2","MUC5702_S8.tr3","MUC5704_S10.tr1","MUC5704_S10.tr2","MUC5704_S10.tr3","SAR59.7.tr1","SAR59.7.tr2","SAR59.8.tr1","SAR59.8.tr2")
+
+
+data_star_chx_cyto <- as.data.frame(data_star) %>% select("MUC5701_S7.tr1","MUC5701_S7.tr2","MUC5701_S7.tr3","MUC5703_S9.tr1","MUC5703_S9.tr2","MUC5703_S9.tr3","MUC3778_S64.tr1","MUC3778_S64.tr2","MUC3778_S64.tr3","MUC3779_S65.tr1","MUC3779_S65.tr2","MUC3779_S65.tr3","MUC3781_S67.tr1","MUC3781_S67.tr2","MUC3781_S67.tr3","MUC3782_S68.tr1","MUC3782_S68.tr2","MUC3782_S68.tr3")
+
+data_star_NOER_ER <- as.data.frame (data_star) %>%
+select("MUC5708_S14.tr1", "MUC5708_S14.tr2", "MUC5708_S14.tr3", "SAR59.6.tr1", "SAR59.6.tr2", "SAR59.10.tr1", "SAR59.10.tr2", "MUC5706_S12.tr1", "MUC5706_S12.tr2", "MUC5706_S12.tr3", "SAR59.5.tr1", "SAR59.5.tr2", "SAR59.9.tr1", "SAR59.9.tr2","MUC5707_S13.tr1", "MUC5707_S13.tr2", "MUC5707_S13.tr3", "MUC3775_S61.tr1", "MUC3775_S61.tr2", "MUC3775_S61.tr3", "MUC3776_S62.tr1", "MUC3776_S62.tr2", "MUC3776_S62.tr3", "MUC5705_S11.tr1", "MUC5705_S11.tr2", "MUC5705_S11.tr3", "MUC3772_S58.tr1", "MUC3772_S58.tr2", "MUC3772_S58.tr3", "MUC3773_S59.tr1", "MUC3773_S59.tr2", "MUC3773_S59.tr3")
+
+data_star_CHX_all <- as.data.frame (data_star) %>%
+select("MUC5701_S7.tr1","MUC5701_S7.tr2","MUC5701_S7.tr3","MUC5703_S9.tr1","MUC5703_S9.tr2","MUC5703_S9.tr3","MUC3778_S64.tr1","MUC3778_S64.tr2","MUC3778_S64.tr3","MUC3779_S65.tr1","MUC3779_S65.tr2","MUC3779_S65.tr3","MUC3781_S67.tr1","MUC3781_S67.tr2","MUC3781_S67.tr3","MUC3782_S68.tr1","MUC3782_S68.tr2","MUC3782_S68.tr3","SAR59.11.tr1","SAR59.11.tr2","SAR59.12.tr1","SAR59.12.tr2","MUC5702_S8.tr1","MUC5702_S8.tr2","MUC5702_S8.tr3","MUC5704_S10.tr1","MUC5704_S10.tr2","MUC5704_S10.tr3","SAR59.7.tr1","SAR59.7.tr2","SAR59.8.tr1","SAR59.8.tr2")
+
+
+```
+
+``````{r nucleus, echo=FALSE}
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/human/er-noer.all.labels.map", header = FALSE, sep = "\t"))
+
+data_star <- data_star_nuc
+star <- pca_analysis(data_star, labels, "not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+star[2]
+star_rlog[2]
+star_vst[2]
+
+star[3]
+star_rlog[3]
+star_vst[3]
+
+star[4]
+star_rlog[4]
+star_vst[4]
+
+```
+#chx_nucl
+
+``````{r chx_nucleus, echo=FALSE}
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/human/chx.nucl.labels.map", header = FALSE, sep = "\t"))
+
+data_star <- data_star_chx_nuc
+star <- pca_analysis(data_star, labels, "not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+star[2]
+star_rlog[2]
+star_vst[2]
+
+star[3]
+star_rlog[3]
+star_vst[3]
+
+star[4]
+star_rlog[4]
+star_vst[4]
+
+```
+
+## Cyto samples
+
+```{r cyto, echo=FALSE}
+data_star <- data_star_cyto
+
+labels <- data.frame(read.csv(file = "./er-noer.cyto.labels.map", header = FALSE, sep = "\t"))
+
+star <- pca_analysis(data_star, labels, "not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+star[2]
+star_rlog[2]
+star_vst[2]
+
+star[3]
+star_rlog[3]
+star_vst[3]
+
+star[4]
+star_rlog[4]
+star_vst[4]
+
+```
+
+
+## ChX-Cyto samples
+
+```{r chx-cyto, echo=FALSE}
+data_star <- data_star_chx_cyto
+
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/human/chx.cyto.labels.map", header = FALSE, sep = "\t"))
+
+star <- pca_analysis(data_star, labels, "not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+star[2]
+star_rlog[2]
+star_vst[2]
+
+star[3]
+star_rlog[3]
+star_vst[3]
+
+star[4]
+star_rlog[4]
+star_vst[4]
+
+```
+
+
+```{r all data, echo=FALSE}
+
+data_star <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/human/gene.counts.star", row.names = 1, header = TRUE))
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/all.labels.map", header = FALSE, sep = "\t"))
+
+
+
+
+star <- pca_analysis(data_star, labels, "not normalized")
+
+data_star_rlog <- rlogTransformation(as.matrix(data_star))
+data_star_vst <- varianceStabilizingTransformation(as.matrix(data_star))
+
+rownames(data_star_rlog) <- rownames(data_star)
+rownames(data_star_vst) <- rownames(data_star)
+
+star_rlog <- pca_analysis(data_star_rlog, labels, "rlog transform")
+star_vst <- pca_analysis(data_star_vst, labels, "vst transform")
+
+
+star[1]
+star_rlog[1]
+star_vst[1]
+
+star[2]
+star_rlog[2]
+star_vst[2]
+
+star[3]
+star_rlog[3]
+star_vst[3]
+
+star[4]
+star_rlog[4]
+star_vst[4]
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

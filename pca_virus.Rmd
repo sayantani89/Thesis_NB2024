@@ -1,0 +1,170 @@
+---
+title: "PCA"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(factoextra)
+options(ggrepel.max.overlaps = 50)
+```
+
+```{r functions, echo=FALSE}
+pca_analysis <- function(data, labels) {
+res.pca <- prcomp(t(data))
+
+
+a <- fviz_eig(res.pca)
+
+
+b <- fviz_pca_ind(res.pca,
+             col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+
+c <- fviz_pca_var(res.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+#fviz_pca_biplot(res.pca, repel = TRUE,
+#                col.ind = "cos2",  # Individuals color
+#                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#                col.var = "#2E9FDF" # Variables color
+#)
+
+groups <- as.factor(paste(labels$V2, labels$V3))
+d <- fviz_pca_ind(res.pca,
+             col.ind = groups, # color by groups
+             #palette = c("#00AFBB",  "#FC4E07"),
+             #addEllipses = TRUE, # Concentration ellipses
+             #ellipse.type = "confidence",
+             legend.title = "Groups",
+             col.var = "#2E9FDF", # Variables color
+             repel = TRUE
+)
+plot_list <- list(a,b,c,d)
+return(plot_list)
+}
+
+```
+
+## Nucleus samples:
+
+```{r nucleus, echo=FALSE}
+
+getwd()
+data_star <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/viral/Akata_inverted_nuc/gene.counts.star", row.names = 1, header = TRUE))
+data_hisat <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/viral/Akata_inverted_nuc/gene.counts.hisat", row.names = 1, header = TRUE))
+
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/viral/Akata_inverted_nuc/er-noer.nuc.labels.map", header = FALSE, sep = "\t"))
+
+
+star <- pca_analysis(data_star, labels)
+hisat <- pca_analysis(data_hisat, labels)
+
+star[1]
+hisat[1]
+
+star[2]
+hisat[2]
+
+star[3]
+hisat[3]
+
+star[4]
+hisat[4]
+
+```
+
+## Cyto samples
+
+```{r cyto, echo=FALSE}
+data_star <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/viral/Akata_inverted_cyto/gene.counts.star", row.names = 1, header = TRUE))
+data_hisat <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/viral/Akata_inverted_cyto/gene.counts.hisat", row.names = 1, header = TRUE))
+
+
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/viral/Akata_inverted_cyto/er-noer.cyto.labels.map", header = FALSE, sep = "\t"))
+
+star <- pca_analysis(data_star, labels)
+hisat <- pca_analysis(data_hisat, labels)
+
+star[1]
+hisat[1]
+
+star[2]
+hisat[2]
+
+star[3]
+hisat[3]
+
+star[4]
+hisat[4]
+
+```
+
+```{r all_samples, echo=FALSE}
+data <- as.matrix(read.table(file = "/Users/nini/Documents/EBV/viral/Akata_inverted/gene.counts.star", row.names = 1, header = TRUE))
+
+
+labels <- data.frame(read.csv(file = "/Users/nini/Documents/EBV/all.labels.map", header = FALSE, sep = "\t"))
+
+#star <- pca_analysis(data, labels)
+
+
+res.pca <- prcomp(t(data))
+
+
+fviz_eig(res.pca)
+
+
+fviz_pca_ind(res.pca,
+             col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+
+fviz_pca_var(res.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+#fviz_pca_biplot(res.pca, repel = TRUE,
+#                col.ind = "cos2",  # Individuals color
+#                gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#                col.var = "#2E9FDF" # Variables color
+#)
+
+groups <- as.factor(labels$V2)
+fviz_pca_ind(res.pca,
+             col.ind = groups, # color by groups
+             #palette = c("#00AFBB",  "#FC4E07"),
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence",
+             legend.title = "Groups",
+             col.var = "#2E9FDF", # Variables color
+             repel = TRUE
+)
+
+groups <- as.factor(labels$V2)
+fviz_pca_ind(res.pca,
+             col.ind = groups, # color by groups
+             label="none",
+             #palette = c("#00AFBB",  "#FC4E07"),
+             #addEllipses = TRUE, # Concentration ellipses
+             #ellipse.type = "confidence",
+             legend.title = "Groups",
+             col.var = "#2E9FDF", # Variables color
+             repel = TRUE
+)
+
+```
+
