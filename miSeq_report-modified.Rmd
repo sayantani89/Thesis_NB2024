@@ -1,0 +1,371 @@
+---
+title: ''
+output: pdf_document
+date: '2023-08-18'
+---
+
+```{r setup, include=FALSE}
+library(lemon)
+library(ggpubr)
+library(ggrepel)
+library(tidyverse)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Test
+```{r pie_charts, echo=FALSE}
+piechartPlot <- function(df, title="title") {
+    df2 <- df %>% 
+    mutate(csum = rev(cumsum(rev(percent))), 
+           pos = percent/2 + lead(csum, 1),
+           pos = if_else(is.na(pos), percent/2, pos))
+
+  ggplot(df, aes(x = "" , y = percent, fill = fct_inorder(type))) +
+    geom_col(width = 1, color = 1) +
+    coord_polar(theta = "y") +
+    scale_fill_brewer(palette = "Pastel1") +
+    geom_label_repel(data = df2,
+                     aes(y = pos, label = paste0(percent, "%")),
+                     size = 4.5, nudge_x = 1, show.legend = FALSE) +
+    guides(fill = guide_legend(title = "Group")) +
+    theme_void() +labs(title = title)
+}
+```
+
+
+```{r intro, echo=FALSE, fig.height = 6.5, fig.width = 10.5, fig.align = "center"}
+data <- read.csv(file = "./read.quality", header = FALSE, sep = "\t")
+head(data)
+colnames(data) <- c("donor", "gene", "type", "count", "percent")
+p <- ggplot(data, aes(x = type, y = percent, col = type)) +
+  geom_boxplot(alpha = 0.5, position = "identity") +
+  labs(x = "Read-pair type", y = "Percent of total", title = "Read-pair type distribution") +
+  theme_minimal() + rotate_x_text(angle = 90)
+p
+p+facet_grid(. ~ gene)
+p+facet_grid(. ~ donor)
+
+```
+
+```{r pieScharts, echo=FALSE, fig.height = 6.5, fig.width = 10.5, fig.align = "center"}
+
+df <- data
+for(gene in unique(data$gene)) {
+  df <- data[data$gene == gene,]
+  for (donor in unique(data$donor)) {
+    print(piechartPlot(df[df$donor == donor,], paste(gene, " - ", donor)))
+  }
+}
+```
+
+
+
+## Including Plots
+
+```{r lztfl1-1, echo=FALSE}
+#data <- read.csv(file = "/mnt/raidinput/input/own/projekte/kempkes/miSeq_230804/final/gotohEC/combined/LZTFL1-1.merged", header = FALSE, sep = "\t")
+#head(data)
+#colnames(data) <- c("donor", "gene", "type", "count", "percent")
+
+#p <- ggbarplot(data, x = "ec", y = "percent", col = "ec", label = TRUE) +
+#  #geom_boxplot(alpha = 0.5, position = "identity") +
+#  labs(x = "Position in fragment", y = "Proportion of paired reads", title = "Positions covered by both reads of a pair, shown as a proportion of total") +
+#  theme_minimal()
+#p+facet_grid(. ~ donor)
+#p+facet_grid(donor ~ .)
+```
+
+```{r all, echo=FALSE}
+plotDistribBarsPercent <- function(data, header = "title") {
+p <- ggbarplot(data, x = "ec", y = "percent", col = "ec", label = TRUE) +
+  labs(x = "Read pair type (EC)", y = "Proportion of total", title = header) +
+  theme_minimal() + rotate_x_text(angle = 90)
+#p+facet_grid(. ~ donor)
+p+facet_grid(donor ~ .)
+}
+plotDistribBarsTotal <- function(data, header = "title") {
+p <-  ggbarplot(data, x = "ec", y = "count", col = "ec", label = TRUE) +
+  labs(x = "Read pair type (EC)", y = "Proportion of total", title = header) +
+  theme_minimal() + rotate_x_text(angle = 90)
+#p+facet_grid(. ~ donor)
+p+facet_grid(donor ~ .)
+}
+
+data <- read.csv(file = "./ec_counts.merged", header = FALSE, sep = "\t")
+colnames(data) <- c("donor", "gene", "count", "percent", "ec")
+
+plotDistribBarsPercent(data[data$gene == "LZTFL1-1",], "LZTFL1-1")
+plotDistribBarsPercent(data[data$gene == "LZTFL1-pro",], "LZTFL1-pro")
+plotDistribBarsPercent(data[data$gene == "HIVEP3",], "HIVEP3")
+#plotDistribBarsPercent(data[data$gene == "SLAMF1",], "SLAMF1")
+#plotDistribBarsPercent(data[data$gene == "POU5F1B",], "POU5F1B")
+
+plotDistribBarsTotal(data[data$gene == "LZTFL1-1",], "LZTFL1-1")
+plotDistribBarsTotal(data[data$gene == "LZTFL1-pro",], "LZTFL1-pro")
+plotDistribBarsTotal(data[data$gene == "HIVEP3",], "HIVEP3")
+#plotDistribBarsTotal(data[data$gene == "SLAMF1",], "SLAMF1")
+#plotDistribBarsTotal(data[data$gene == "POU5F1B",], "POU5F1B")
+```
+
+
+
+
+```{r read-types, echo=FALSE, fig.height = 6.5, fig.width = 10.5, fig.align = "center"}
+data <- read.csv(file = "./read.quality", header = FALSE, sep = "\t")
+head(data)
+colnames(data) <- c("donor", "gene", "type", "count", "percent")
+
+ggboxplot(data, x = "gene",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "donor") + rotate_x_text(angle = 90)
+
+ggboxplot(data, x = "donor",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "gene") + rotate_x_text(angle = 90)
+
+data2 <- data[data$gene != "POU5F1B-exon",]
+ggboxplot(data2, x = "gene",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "donor") + rotate_x_text(angle = 90)
+
+ggboxplot(data2, x = "donor",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "gene") + rotate_x_text(angle = 90)
+
+data3 <- data
+data3 <- data3[data3$gene != "POU5F1B-exon",]
+data3 <- data3[data3$gene != "HIVEP3",]
+data3 <- data3[data3$gene != "SLAMF1",]
+ggboxplot(data3, x = "gene",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "donor") + rotate_x_text(angle = 90)
+
+ggboxplot(data3, x = "donor",
+          y = "percent",
+          combine = TRUE,
+          ylab = "percent",
+          color = "type", xlab = "", add = c("boxplot", "jitter"), shape = "gene") + rotate_x_text(angle = 90)
+
+
+
+p <- ggplot(data, aes(x = type, y = percent, col = type)) +
+  geom_boxplot(alpha = 0.5, position = "identity") +
+  labs(x = "Position in fragment", y = "Proportion of paired reads", title = "Positions covered by both reads of a pair, shown as a proportion of total") +
+  theme_minimal()
+p
+p+facet_grid(. ~ gene)
+p+facet_grid(. ~ donor)
+p+facet_grid(donor ~ gene)
+p+facet_rep_grid(rows=vars(donor), cols=vars(gene), scales = "free", switch="both", repeat.tick.labels = 'y')
+
+
+```
+```{r stackedBar, echo=FALSE}
+
+stackedBarGenePercent <- function(data, title="title") {
+
+  summarized_data <- data %>%
+  group_by(donor, gene, ec_group = ifelse(ec == "0-0-0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+  
+
+  ggplot(summarized_data, aes(x = donor, y = total_percent, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Percent") +
+  scale_fill_manual(values = c("WT" = "#7F3C8C", "KO" = "#F7E2B0")) +
+  ggtitle(title) +
+  theme_minimal()
+  
+}
+
+stackedBarGeneCount <- function(data, title="title") {
+
+  summarized_data <- data %>%
+  group_by(donor, gene, ec_group = ifelse(ec == "0-0-0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+
+  
+  ggplot(summarized_data, aes(x = donor, y = total_count, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Count") +
+  scale_fill_manual(values = c("WT" = "#7F3C8C", "KO" = "#F7E2B0")) +
+  ggtitle(title) +
+  theme_minimal()
+}
+```
+
+
+```{r koefficiencyLZTFL1-1, echo=FALSE}
+data <- read.csv(file = "./ec_counts_filtered.merged", header = FALSE, sep = "\t")
+colnames(data) <- c("donor", "gene", "count", "percent", "ec")
+head(data)
+
+
+# POU5F1B-exon	757
+# LZTFL1-1	760
+# LZTFL1-pro	684
+# POU5F1B-pro	479
+# HIVEP3	438
+# SLAMF1	832
+
+
+print("Regions : ([(136-237), (277-452), (492-650)])")
+
+
+stackedBarGenePercent(data[data$gene == "HIVEP3",], "KO efficiency for HIVEP3 per sample")
+stackedBarGeneCount(data[data$gene == "HIVEP3",], "KO efficiency for HIVEP3 per sample")
+
+stackedBarGenePercent(data[data$gene == "LZTFL1-1",], "KO efficiency for LZTFL1 exon-214 per sample")
+stackedBarGeneCount(data[data$gene == "LZTFL1-1",], "KO efficiency for LZTFL1-1 per sample")
+
+
+  summarized_data <- data[data$gene == "LZTFL1-1",] %>%
+  group_by(donor, gene, ec_group = ifelse(ec == "0-0-0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+print(summarized_data)
+
+summarized_data2 <- data[data$gene == "HIVEP3",] %>%
+  group_by(donor, gene, ec_group = ifelse(ec == "0-0-0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+print(summarized_data2)
+```
+
+
+
+
+```{r koefficiencyLZTFL1-pro, echo=FALSE}
+data <- read.csv(file = "./ec_counts_filtered.merged", header = FALSE, sep = "\t")
+colnames(data) <- c("donor", "gene", "count", "percent", "ec")
+head(data)
+
+print("Regions : ([(218-510)])")
+# LZTFL1-pro	684
+
+
+data <- data[data$gene == "LZTFL1-pro",]
+title<- "KO efficiency for LZTFL1 exon-201/202 per sample"
+
+
+  summarized_data3 <- data %>%
+  group_by(donor, gene, ec_group = ifelse(ec == "0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+ 
+
+  ggplot(summarized_data3, aes(x = donor, y = total_percent, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Percent") +
+  scale_fill_manual(values = c("WT" = "#7F3C8C", "KO" = "#F7E2B0")) +
+  ggtitle(title) +
+  theme_minimal()
+  
+ggplot(summarized_data3, aes(x = donor, y = total_count, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Count") +
+  scale_fill_manual(values = c("WT" = "#7F3C8C", "KO" = "#F7E2B0")) +
+  ggtitle(title) +
+  theme_minimal()
+
+
+print(summarized_data3)
+
+```
+
+```{r koefficiencyPOU5F1B-exon, echo=FALSE}
+data <- read.csv(file = "./ec_counts_filtered.merged", header = FALSE, sep = "\t")
+colnames(data) <- c("donor", "gene", "count", "percent", "ec")
+head(data)
+
+print("Regions : ([(73-270), (310-432), (472-654)])")
+# POU5F1B-exon	757
+
+data <- data[data$gene == "POU5F1B-exon",]
+title<- "KO efficiency for POU5F1B-exon per sample"
+
+
+  summarized_data4 <- data %>%
+  group_by(donor, gene, ec_group = ifelse(ec == "0-1-0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+  
+
+  ggplot(summarized_data4, aes(x = donor, y = total_percent, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Percent") +
+  scale_fill_manual(values = c("WT" = "#7F3C8C", "KO" = "#F7E2B0")) +
+  ggtitle(title) +
+  theme_minimal()
+  
+  ggplot(summarized_data4, aes(x = donor, y = total_count, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Count") +
+  #scale_fill_manual(values = c("WT" = "blue", "KO" = "red")) +
+  ggtitle(title) +
+  theme_minimal()
+  print(summarized_data4)
+
+```
+
+
+```{r koefficiencySLAMF1, echo=FALSE}
+data <- read.csv(file = "./ec_counts_filtered.merged", header = FALSE, sep = "\t")
+colnames(data) <- c("donor", "gene", "count", "percent", "ec")
+head(data)
+
+print("Regions : ([(69-128), (168-568), (608-764)])")
+
+data <- data[data$gene == "SLAMF1",]
+title<- "KO efficiency for SLAMF1 per sample"
+
+
+  summarized_data5 <- data %>%
+group_by(donor, gene, ec_group = ifelse(ec == "0-0-0", "WT", "KO")) %>%
+  summarise(
+    total_count = sum(count),
+    total_percent = sum(percent)
+  )
+  
+
+  ggplot(summarized_data5, aes(x = donor, y = total_percent, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Percent") +
+  scale_fill_manual(values = c("WT" = "#7F3C8C", "KO" = "#F7E2B0")) +
+  ggtitle(title) +
+  theme_minimal()
+  
+  ggplot(summarized_data5, aes(x = donor, y = total_count, fill = ec_group)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Patient", y = "Total Count") +
+  #scale_fill_manual(values = c("WT" = "blue", "KO" = "red")) +
+  ggtitle(title) +
+  theme_minimal()
+  print(summarized_data5)
+
+```
